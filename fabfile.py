@@ -1,12 +1,13 @@
 import fabric.api as fab
 from os import path
 
-PYREPO_DIR = "/path/to/pyrepo"
+PYREPO_DIR = "/var/www/gefoo.org/pyrepo/"
 PACKAGE_NAME = 'ubeity'
 
 fab.env.roledefs = {
-    'pyrepo': ['hostname'],
-    'doc': ['hostname'],
+    'pyrepo': ['gefoo.org'],
+    'prod': ['chef.lchome.net'],
+    'staging': ['mixer.lchome.net']
 }
 
 
@@ -51,3 +52,19 @@ def doc():
            '-d {builddir}/doctrees . {builddir}/html')
     with fab.lcd('doc'):
         fab.local(cmd.format(**opts))
+
+
+@fab.task
+def bootstrap():
+    pass
+
+
+@fab.task
+def test(coverage=False):
+    """
+    Start py.test and start unittesting
+    """
+    if coverage:
+        fab.local("env/bin/py.test -f --color yes --cov ubiety/ ubiety")
+    else:
+        fab.local("env/bin/py.test -f --color yes ubiety")
