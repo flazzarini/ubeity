@@ -63,14 +63,14 @@ Returns a list of available ``Pingers`` with their detailed information.
                 "delay": 10,
                 "wait": 4,
                 "ip": "10.0.0.5",
-                "status": true,
+                "online": true,
                 "name": "john"
             },
             {
                 "delay": 10,
                 "wait": 4,
                 "ip": "10.0.0.6",
-                "status": true,
+                "online": true,
                 "name": "jane"
            }
         ]
@@ -90,6 +90,6 @@ This query is case insensitive.
         "delay": 10,
         "wait": 4,
         "ip": "10.0.0.6",
-        "status": true,
+        "online": true,
         "name": "jane"
     }
