@@ -1,8 +1,8 @@
-from ubiety.manager import Manager
 import logging
 import time
 from threading import Thread
 
+from ubiety.manager import Manager
 
 LOG = logging.getLogger(__name__)
 
