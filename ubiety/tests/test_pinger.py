@@ -18,6 +18,19 @@ class TestPinger(TestCase):
             wait=self.wait
         )
 
+    def test_repr(self):
+        expected = (
+            "Pinger('{}', '{}', online={}, delay={}, wait={})"
+            .format(
+                self.name,
+                self.ip,
+                self.online,
+                self.delay,
+                self.wait
+            )
+        )
+        self.assertEqual(str(self.pinger), expected)
+
     def test_set_online_true_whenfalse(self):
         expected = True
         result = self.pinger.set_online(True)
