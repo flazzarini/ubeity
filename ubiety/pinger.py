@@ -9,45 +9,50 @@ LOG = logging.getLogger(__name__)
 
 
 class Pinger(Thread):
-    def __init__(self, name, ip, status=False, delay=10, wait=1):
+    def __init__(self, name, ip, online=False, delay=10, wait=1):
         super(Pinger, self).__init__()
         self.name = name
         self.ip = ip
-        self.status = status
+        self.online = online
         self.delay = delay
         self.wait = wait
+        self.retry = 0
 
-    def __repr(self):
+    def __repr__(self):
         return (
-            "Worker('{}', '{}', online={}, delay={})"
+            "Pinger('{}', '{}', online={}, delay={}, wait={})"
             .format(
                 self.name,
                 self.ip,
                 self.online,
-                self.delay
+                self.delay,
+                self.wait
             )
         )
 
-    def set_status(self, status):
+    def set_online(self, online):
         """
-        Set the online status of the pinger object, depending on the current
-        status decide wether to emit a message or not
+        Set the ``online`` attribute of the pinger object, depending on the
+        current online decide wether to emit a message or not. Once a Pinger
+        has become online change the ``delay`` to a higher value.
 
-        :param status: Status to set the pinger instance to
+        :param online: online to set the pinger instance to
         """
-        if status is None:
-            raise ValueError("Please specify True or False for status")
+        if online is None:
+            raise ValueError("Please specify True or False for online")
 
-        if (not self.status and status):
+        if (not self.online and online):
             LOG.info("{} - {} is online".format(self.name, self.ip))
-            self.status = status
+            self.online = online
+            self.delay = self.delay * 4
 
-        elif (self.status and not status):
+        elif (self.online and not online):
             LOG.info("{} - {} went offline".format(self.name, self.ip))
-            self.status = status
+            self.online = online
+            self.delay = self.delay / 4
+        return self.online
 
     def run(self, single_run=False):
-        retry = 0
         devnull = open(os.devnull, 'w')
         cmd = [
             'ping',
@@ -60,18 +65,21 @@ class Pinger(Thread):
             result = call(cmd, stdout=devnull)
 
             if result == 1:
-                retry += 1
+                self.retry += 1
                 LOG.debug(
                     "No response from {} - {} increase retry count to {}"
-                    .format(self.name, self.ip, retry)
+                    .format(self.name, self.ip, self.retry)
                 )
 
-            if result == 1 and retry > 3:
-                self.set_status(False)
-                retry = 0
+            if result == 1 and self.retry >= 3:
+                self.set_online(False)
+                self.retry = 0
             elif result == 0:
-                self.set_status(True)
-                retry = 0
+                self.set_online(True)
+                self.retry = 0
+
+            if single_run:
+                break
             time.sleep(self.delay)
 
     def as_dict(self):
@@ -81,7 +89,7 @@ class Pinger(Thread):
         result = {
             'name': self.name,
             'ip': self.ip,
-            'status': self.status,
+            'online': self.online,
             'delay': self.delay,
             'wait': self.wait
         }
@@ -92,7 +100,7 @@ class Pinger(Thread):
         result = Pinger(
             payload.get('name', 'NA'),
             payload.get('ip', '127.0.0.1'),
-            status=payload.get('status', False),
+            online=payload.get('online', False),
             delay=payload.get('delay', 10),
             wait=payload.get('wait', 1)
         )
